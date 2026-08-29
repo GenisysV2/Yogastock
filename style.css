@@ -1018,7 +1018,7 @@ body {
         background: transparent !important;
     }
 
-    /* Top Row: S.No (1) + Description (2, Compresses to fit) + Lock (3) + Delete (4) */
+    /* Top Row: S.No (1) + Description (2, Expanded & comfortably fitted) + Lock (3) + Delete (4) */
     .cell-sno {
         order: 1;
         background: #e0e7ff;
@@ -1037,20 +1037,18 @@ body {
 
     .cell-desc {
         order: 2;
-        flex: 1 1 0% !important; /* Compresses/shrinks smoothly to keep lock and close button in Row 1 */
-        min-width: 0 !important;
-        overflow: hidden;
+        flex: 1 1 140px !important; /* Ample space for particulars, forces Quantity to Row 2 */
+        min-width: 140px !important;
     }
 
     .cell-desc input {
         font-weight: 700;
-        font-size: 14px;
+        font-size: 14.5px;
         color: #0f172a;
         background: #f8fafc;
-        padding: 7px 9px;
+        padding: 7px 10px;
         height: 36px;
         width: 100%;
-        min-width: 0 !important;
     }
 
     .cell-desc .field-label-mobile {
