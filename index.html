@@ -668,29 +668,38 @@
 
             const isTargetEnabled = document.getElementById('chk-enable-target')?.checked;
 
+            const valDisplay = (item.qty === 0 || item.rate === 0) 
+                ? '<span class="nil-value">Nil</span>' 
+                : '₹ ' + formatNumber(rowVal);
+
             tr.innerHTML = `
                 <td class="cell-lock" style="text-align: center; display: ${isTargetEnabled ? '' : 'none'};">
                     <button class="lock-btn ${item.locked ? 'locked' : ''}" onclick="toggleRowLock('${sectionKey}', ${item.id})" title="${item.locked ? 'Click to Unlock' : 'Click to Lock value during auto-generation'}">
                         ${item.locked ? '🔒' : '🔓'}
                     </button>
                 </td>
-                <td style="text-align: center; font-weight: 600; color: #64748b;">${index + 1}</td>
-                <td>
-                    <input type="text" class="editor-input-text" id="ed-name-${sectionKey}-${item.id}" value="${item.name}" oninput="updateEditorLiveCalculations()">
+                <td class="cell-sno">${index + 1}</td>
+                <td class="cell-desc">
+                    <span class="field-label-mobile">Description</span>
+                    <input type="text" class="editor-input-text" id="ed-name-${sectionKey}-${item.id}" value="${item.name}" placeholder="Description" oninput="updateEditorLiveCalculations()">
                 </td>
-                <td>
-                    <input type="number" class="editor-input-num" id="ed-qty-${sectionKey}-${item.id}" value="${item.qty}" min="0" step="any" oninput="updateEditorLiveCalculations()">
+                <td class="cell-qty">
+                    <span class="field-label-mobile">Quantity</span>
+                    <input type="number" class="editor-input-num" id="ed-qty-${sectionKey}-${item.id}" value="${item.qty}" min="0" step="any" placeholder="Qty" oninput="updateEditorLiveCalculations()">
                 </td>
-                <td>
-                    <input type="text" class="editor-input-text" id="ed-unit-${sectionKey}-${item.id}" value="${item.unit || ''}" placeholder="unit" oninput="updateEditorLiveCalculations()">
+                <td class="cell-unit">
+                    <span class="field-label-mobile">Unit</span>
+                    <input type="text" class="editor-input-text" id="ed-unit-${sectionKey}-${item.id}" value="${item.unit || ''}" placeholder="Unit" oninput="updateEditorLiveCalculations()">
                 </td>
-                <td>
-                    <input type="number" class="editor-input-num" id="ed-rate-${sectionKey}-${item.id}" value="${item.rate}" min="0" step="any" oninput="updateEditorLiveCalculations()">
+                <td class="cell-rate">
+                    <span class="field-label-mobile">Unit Rate (₹)</span>
+                    <input type="number" class="editor-input-num" id="ed-rate-${sectionKey}-${item.id}" value="${item.rate}" min="0" step="any" placeholder="Rate ₹" oninput="updateEditorLiveCalculations()">
                 </td>
-                <td class="live-row-val" id="ed-val-${sectionKey}-${item.id}">
-                    ${(item.qty === 0 || item.rate === 0) ? '<span class="nil-value">Nil</span>' : '₹ ' + formatNumber(rowVal)}
+                <td class="cell-val live-row-val" id="ed-val-${sectionKey}-${item.id}">
+                    <span class="field-label-mobile">Value (₹)</span>
+                    <span class="val-text">${valDisplay}</span>
                 </td>
-                <td style="text-align: center;">
+                <td class="cell-del" style="text-align: center;">
                     <button class="delete-row-btn" onclick="deleteEditorRow('${sectionKey}', ${item.id})" title="Remove item">×</button>
                 </td>
             `;
@@ -751,9 +760,10 @@
 
                 const valEl = document.getElementById(`ed-val-${sectionKey}-${item.id}`);
                 if (valEl) {
-                    valEl.innerHTML = (item.qty === 0 || item.rate === 0) 
+                    const formatted = (item.qty === 0 || item.rate === 0) 
                         ? '<span class="nil-value">Nil</span>' 
                         : `₹ ${formatNumber(rowVal)}`;
+                    valEl.innerHTML = `<span class="field-label-mobile">Value (₹)</span><span class="val-text">${formatted}</span>`;
                 }
             });
         });
