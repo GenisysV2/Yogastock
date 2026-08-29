@@ -38,9 +38,6 @@
                 </button>
                 <input type="file" id="xml-upload-input" accept=".xml" style="display: none;" onchange="handleXmlUpload(event)">
                 
-                <button class="btn btn-random" onclick="regenerateRandomData()" title="Generate random stock values balanced to Target Total">
-                    🎲 Auto-Balance to Target
-                </button>
                 <button class="btn btn-generate" onclick="generateReportView()" title="Generate the official printable report">
                     ✨ Generate Report
                 </button>
@@ -48,7 +45,25 @@
         </div>
 
         <div class="editor-body">
-            <div class="target-box">
+            <!-- Toggle Checkbox to Enable Desired Grand Total Auto-Balancing -->
+            <div class="enable-target-card">
+                <div>
+                    <label class="enable-target-label" for="chk-enable-target">
+                        <input type="checkbox" id="chk-enable-target" onchange="toggleTargetControls()">
+                        <span>🎯 Enable Desired Grand Total Auto-Balancing</span>
+                    </label>
+                    <div class="enable-target-desc">
+                        Check this box to specify a Desired Grand Total and auto-balance material quantities to hit your exact target.
+                    </div>
+                </div>
+
+                <button class="btn btn-random" id="btn-randomize-main" onclick="regenerateRandomData()" title="Generate fresh random values between ₹11L and ₹13.5L">
+                    🎲 Randomize Values
+                </button>
+            </div>
+
+            <!-- Target Grand Total Input Bar (Visible only when enabled) -->
+            <div class="target-box" id="target-box-container" style="display: none;">
                 <div class="target-box-left">
                     <label for="input-target-total">
                         <span>🎯</span> Desired Grand Total (₹):
@@ -58,10 +73,14 @@
                         <input type="number" id="input-target-total" class="target-input" value="1200000" step="5000" min="50000" onchange="regenerateRandomData()">
                     </div>
 
-                    <label for="chk-accurate-match" style="margin-left: 15px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 700; color: #3730a3; user-select: none;">
-                        <input type="checkbox" id="chk-accurate-match" onchange="regenerateRandomData()" style="width: 18px; height: 18px; cursor: pointer; accent-color: #4f46e5;">
+                    <label for="chk-accurate-match" style="margin-left: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 700; color: #3730a3; user-select: none;">
+                        <input type="checkbox" id="chk-accurate-match" onchange="onAccurateMatchChange()" style="width: 18px; height: 18px; cursor: pointer; accent-color: #4f46e5;">
                         <span>Accurate Match</span>
                     </label>
+
+                    <button class="btn btn-random" id="btn-auto-balance" onclick="regenerateRandomData()" style="margin-left: 8px;" title="Generate random stock values balanced to Target Total">
+                        🎲 Auto-Balance to Target
+                    </button>
                 </div>
                 <div class="target-hint">
                     💡 Click <strong>🔒 Lock</strong> on any row below to freeze its value during auto-balancing!
@@ -97,12 +116,13 @@
                 <table class="editor-table">
                     <thead>
                         <tr>
-                            <th style="width: 5%; text-align: center;">Lock</th>
-                            <th style="width: 35%;">Description</th>
-                            <th style="width: 17%; text-align: right;">Quantity</th>
+                            <th class="col-lock" style="width: 5%; text-align: center; display: none;">Lock</th>
+                            <th style="width: 5%; text-align: center;">S.No.</th>
+                            <th style="width: 32%;">Description</th>
+                            <th style="width: 16%; text-align: right;">Quantity</th>
                             <th style="width: 10%;">Unit</th>
                             <th style="width: 15%; text-align: right;">Unit Rate (₹)</th>
-                            <th style="width: 15%; text-align: right;">Value (₹)</th>
+                            <th style="width: 14%; text-align: right;">Value (₹)</th>
                             <th style="width: 3%; text-align: center;"></th>
                         </tr>
                     </thead>
@@ -121,12 +141,13 @@
                 <table class="editor-table">
                     <thead>
                         <tr>
-                            <th style="width: 5%; text-align: center;">Lock</th>
-                            <th style="width: 35%;">Description</th>
-                            <th style="width: 17%; text-align: right;">Quantity</th>
+                            <th class="col-lock" style="width: 5%; text-align: center; display: none;">Lock</th>
+                            <th style="width: 5%; text-align: center;">S.No.</th>
+                            <th style="width: 32%;">Description</th>
+                            <th style="width: 16%; text-align: right;">Quantity</th>
                             <th style="width: 10%;">Unit</th>
                             <th style="width: 15%; text-align: right;">Unit Rate (₹)</th>
-                            <th style="width: 15%; text-align: right;">Value (₹)</th>
+                            <th style="width: 14%; text-align: right;">Value (₹)</th>
                             <th style="width: 3%; text-align: center;"></th>
                         </tr>
                     </thead>
@@ -162,7 +183,7 @@
                 <button class="btn btn-secondary" onclick="switchToEditor()" title="Modify report values">
                     ✏️ Edit Values
                 </button>
-                <button class="btn btn-random" onclick="regenerateAndRefresh()" title="Regenerate random values directly">
+                <button class="btn btn-random" id="btn-report-regenerate" onclick="regenerateAndRefresh()" style="display: none;" title="Regenerate random values directly">
                     🎲 Regenerate
                 </button>
                 <button class="btn btn-primary" onclick="downloadPdfDirect()" title="Directly download PDF file">
@@ -200,9 +221,10 @@
                 <table class="report-table">
                     <thead>
                         <tr>
-                            <th>Description</th>
-                            <th>Quantity</th>
-                            <th>Value (₹)</th>
+                            <th style="width: 8%; text-align: center;">S.No.</th>
+                            <th style="width: 48%; text-align: left;">Description</th>
+                            <th style="width: 22%; text-align: right;">Quantity</th>
+                            <th style="width: 22%; text-align: right;">Value (₹)</th>
                         </tr>
                     </thead>
                     <tbody id="report-raw-body">
@@ -216,9 +238,10 @@
                 <table class="report-table">
                     <thead>
                         <tr>
-                            <th>Description</th>
-                            <th>Quantity</th>
-                            <th>Value (₹)</th>
+                            <th style="width: 8%; text-align: center;">S.No.</th>
+                            <th style="width: 48%; text-align: left;">Description</th>
+                            <th style="width: 22%; text-align: right;">Quantity</th>
+                            <th style="width: 22%; text-align: right;">Value (₹)</th>
                         </tr>
                     </thead>
                     <tbody id="report-blocks-body">
@@ -457,6 +480,43 @@
         img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
     }
 
+    // Toggle Enable Desired Grand Total visibility
+    function toggleTargetControls() {
+        const isEnabled = document.getElementById('chk-enable-target')?.checked;
+        const targetBox = document.getElementById('target-box-container');
+
+        if (targetBox) targetBox.style.display = isEnabled ? 'flex' : 'none';
+
+        // Toggle table Lock columns and cells
+        document.querySelectorAll('.col-lock').forEach(el => el.style.display = isEnabled ? '' : 'none');
+        document.querySelectorAll('.cell-lock').forEach(el => el.style.display = isEnabled ? '' : 'none');
+
+        syncAccurateMatchState();
+    }
+
+    function onAccurateMatchChange() {
+        syncAccurateMatchState();
+        regenerateRandomData();
+    }
+
+    function syncAccurateMatchState() {
+        const isAccurate = document.getElementById('chk-accurate-match')?.checked;
+        const isTargetEnabled = document.getElementById('chk-enable-target')?.checked;
+        const btnRandomizeMain = document.getElementById('btn-randomize-main');
+
+        if (btnRandomizeMain) {
+            if (isAccurate && isTargetEnabled) {
+                btnRandomizeMain.disabled = true;
+                btnRandomizeMain.classList.add('is-disabled');
+                btnRandomizeMain.title = "Randomize Values is frozen when Accurate Match is active.";
+            } else {
+                btnRandomizeMain.disabled = false;
+                btnRandomizeMain.classList.remove('is-disabled');
+                btnRandomizeMain.title = "Generate fresh random values between ₹11L and ₹13.5L";
+            }
+        }
+    }
+
     // Toggle Lock on specific row
     function toggleRowLock(sectionKey, id) {
         const item = stockData[sectionKey].find(x => x.id === id);
@@ -471,7 +531,17 @@
     function autoBalanceToTargetTotal() {
         syncEditorDataToObject();
 
-        const targetTotal = parseFloat(document.getElementById('input-target-total').value) || 1200000;
+        const isTargetEnabled = document.getElementById('chk-enable-target')?.checked;
+        let targetTotal = 1200000;
+
+        if (isTargetEnabled) {
+            targetTotal = parseFloat(document.getElementById('input-target-total').value) || 1200000;
+        } else {
+            // When target total is disabled: randomly generate total between 11 Lakhs (1,100,000) and 13.5 Lakhs (1,350,000)
+            const minTarget = 1100000;
+            const maxTarget = 1350000;
+            targetTotal = getRand(minTarget / 500, maxTarget / 500) * 500;
+        }
 
         let lockedSum = 0;
         let unlockedItems = [];
@@ -543,7 +613,7 @@
         // Exact Adjustments to hit target precisely down to the last rupee without any ± difference
         let diff = remainingTarget - currentUnlockedSum;
         if (diff !== 0 && unlockedItems.length > 0) {
-            const isAccurate = document.getElementById('chk-accurate-match').checked;
+            const isAccurate = document.getElementById('chk-accurate-match')?.checked;
             
             // Find a raw material item measured in Tonne/Bags to absorb the difference
             let flexItemObj = unlockedItems.find(x => x.item.unit && x.item.unit.toLowerCase() === 'tonne');
@@ -555,7 +625,7 @@
             }
             const flexItem = flexItemObj.item;
             if (flexItem.rate > 0) {
-                if (isAccurate) {
+                if (isAccurate && isTargetEnabled) {
                     // Allow exact decimal quantity to hit the target perfectly
                     const exactValueNeeded = Math.round(flexItem.qty * flexItem.rate) + diff;
                     flexItem.qty = parseFloat((exactValueNeeded / flexItem.rate).toFixed(4));
@@ -573,7 +643,12 @@
 
     function regenerateRandomData() {
         autoBalanceToTargetTotal();
-        showToast("Balanced to target grand total!");
+        const isTargetEnabled = document.getElementById('chk-enable-target')?.checked;
+        if (isTargetEnabled) {
+            showToast("🎯 Balanced to desired grand total!");
+        } else {
+            showToast("🎲 Generated random stock between ₹11L and ₹13.5L!");
+        }
     }
 
     function regenerateAndRefresh() {
@@ -586,17 +661,20 @@
         const tbody = document.getElementById(sectionKey === 'raw' ? 'editor-raw-body' : 'editor-blocks-body');
         tbody.innerHTML = '';
 
-        stockData[sectionKey].forEach(item => {
+        stockData[sectionKey].forEach((item, index) => {
             const tr = document.createElement('tr');
             if (item.locked) tr.classList.add('is-locked');
             const rowVal = Math.round((item.qty || 0) * (item.rate || 0));
 
+            const isTargetEnabled = document.getElementById('chk-enable-target')?.checked;
+
             tr.innerHTML = `
-                <td style="text-align: center;">
+                <td class="cell-lock" style="text-align: center; display: ${isTargetEnabled ? '' : 'none'};">
                     <button class="lock-btn ${item.locked ? 'locked' : ''}" onclick="toggleRowLock('${sectionKey}', ${item.id})" title="${item.locked ? 'Click to Unlock' : 'Click to Lock value during auto-generation'}">
                         ${item.locked ? '🔒' : '🔓'}
                     </button>
                 </td>
+                <td style="text-align: center; font-weight: 600; color: #64748b;">${index + 1}</td>
                 <td>
                     <input type="text" class="editor-input-text" id="ed-name-${sectionKey}-${item.id}" value="${item.name}" oninput="updateEditorLiveCalculations()">
                 </td>
@@ -746,7 +824,7 @@
         tbody.innerHTML = '';
         let sectionTotal = 0;
 
-        stockData[sectionKey].forEach(item => {
+        stockData[sectionKey].forEach((item, index) => {
             const tr = document.createElement('tr');
             const val = Math.round(item.qty * item.rate);
             sectionTotal += val;
@@ -759,6 +837,7 @@
                 : formatNumber(val);
 
             tr.innerHTML = `
+                <td style="text-align: center; color: #64748b; font-weight: 600;">${index + 1}</td>
                 <td>${item.name}</td>
                 <td>${qtyStr}</td>
                 <td>${valStr}</td>
@@ -770,7 +849,7 @@
         const totalTr = document.createElement('tr');
         totalTr.className = 'totals-row';
         totalTr.innerHTML = `
-            <td colspan="2" style="text-align: left;">Total</td>
+            <td colspan="3" style="text-align: left;">Total</td>
             <td style="text-align: right;">₹ ${formatNumber(sectionTotal)}</td>
         `;
         tbody.appendChild(totalTr);
@@ -939,11 +1018,13 @@
         const reportDate = document.getElementById('input-report-date').value;
         const targetTotal = document.getElementById('input-target-total').value;
         const account = stockData.account;
+        const isEnableTarget = document.getElementById('chk-enable-target').checked;
         const isAccurate = document.getElementById('chk-accurate-match').checked;
 
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
         xml += `<YogaStockData>\n`;
         xml += `    <Account>${escapeXml(account)}</Account>\n`;
+        xml += `    <EnableTargetTotal>${isEnableTarget}</EnableTargetTotal>\n`;
         xml += `    <TargetTotal>${targetTotal}</TargetTotal>\n`;
         xml += `    <AccurateMatch>${isAccurate}</AccurateMatch>\n`;
         xml += `    <PeriodFrom>${fromDate}</PeriodFrom>\n`;
@@ -1020,6 +1101,7 @@
                 }
 
                 const account = xmlDoc.getElementsByTagName("Account")[0]?.textContent || "6953035265";
+                const isEnableTarget = xmlDoc.getElementsByTagName("EnableTargetTotal")[0]?.textContent === "true";
                 const targetTotal = xmlDoc.getElementsByTagName("TargetTotal")[0]?.textContent || "1200000";
                 const isAccurate = xmlDoc.getElementsByTagName("AccurateMatch")[0]?.textContent === "true";
                 const periodFrom = xmlDoc.getElementsByTagName("PeriodFrom")[0]?.textContent || "";
@@ -1027,8 +1109,11 @@
                 const reportDate = xmlDoc.getElementsByTagName("ReportDate")[0]?.textContent || "";
 
                 document.getElementById('input-account').value = account;
+                document.getElementById('chk-enable-target').checked = isEnableTarget;
+                toggleTargetControls();
                 document.getElementById('input-target-total').value = targetTotal;
                 document.getElementById('chk-accurate-match').checked = isAccurate;
+                syncAccurateMatchState();
                 document.getElementById('input-period-from').value = periodFrom;
                 document.getElementById('input-period-to').value = periodTo;
                 document.getElementById('input-report-date').value = reportDate;
@@ -1119,6 +1204,7 @@
             if (logoEl) logoEl.src = COMPANY_LOGO_BASE64;
         }
         initDates();
+        toggleTargetControls();
         autoBalanceToTargetTotal();
         updateSealImage();
     });
