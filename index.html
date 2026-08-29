@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Report - Yoga Paver Block</title>
+    <!-- External Separate Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Local & CDN Fallback for html2pdf.js -->
+    <script src="html2pdf.bundle.min.js"></script>
+    <script>
+        if (typeof html2pdf === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
+        }
+    </script>
+    <!-- Base64 Logo Script to avoid canvas tainting/CORS in file:// protocol -->
+    <script src="logo_data.js"></script>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- =========================================================
+         1. DEDICATED EDITOR VIEW (Studio Slate & Indigo Theme)
+         ========================================================= -->
+    <div id="editor-view" class="editor-card">
+        <div class="editor-header">
+            <div class="editor-title">
+                <span class="badge-icon">🛠️</span>
+                <span>Stock Report <span class="highlight-title">Editor Studio</span></span>
+            </div>
+            <div class="editor-actions">
+                <button class="btn btn-xml" onclick="downloadXmlData()" title="Download current editor state as XML file">
+                    📥 Save XML Backup
+                </button>
+                <button class="btn btn-xml" onclick="document.getElementById('xml-upload-input').click()" title="Load editor state from an XML file">
+                    📤 Load XML Backup
+                </button>
+                <input type="file" id="xml-upload-input" accept=".xml" style="display: none;" onchange="handleXmlUpload(event)">
+                
+                <button class="btn btn-random" onclick="regenerateRandomData()" title="Generate random stock values balanced to Target Total">
+                    🎲 Auto-Balance to Target
+                </button>
+                <button class="btn btn-generate" onclick="generateReportView()" title="Generate the official printable report">
+                    ✨ Generate Report
+                </button>
+            </div>
+        </div>
+
+        <div class="editor-body">
+            <div class="target-box">
+                <div class="target-box-left">
+                    <label for="input-target-total">
+                        <span>🎯</span> Desired Grand Total (₹):
+                    </label>
+                    <div class="target-input-wrapper">
+                        <span>₹</span>
+                        <input type="number" id="input-target-total" class="target-input" value="1200000" step="5000" min="50000" onchange="regenerateRandomData()">
+                    </div>
+
+                    <label for="chk-accurate-match" style="margin-left: 15px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 700; color: #3730a3; user-select: none;">
+                        <input type="checkbox" id="chk-accurate-match" onchange="regenerateRandomData()" style="width: 18px; height: 18px; cursor: pointer; accent-color: #4f46e5;">
+                        <span>Accurate Match</span>
+                    </label>
+                </div>
+                <div class="target-hint">
+                    💡 Click <strong>🔒 Lock</strong> on any row below to freeze its value during auto-balancing!
+                </div>
+            </div>
+
+            <!-- Meta Information Inputs -->
+            <div class="meta-grid">
+                <div class="form-group">
+                    <label for="input-period-from">Period From Date</label>
+                    <input type="date" id="input-period-from" class="form-control" onchange="onPeriodFromChange()">
+                </div>
+                <div class="form-group">
+                    <label for="input-period-to">Period To Date</label>
+                    <input type="date" id="input-period-to" class="form-control" onchange="onPeriodToChange()">
+                </div>
+                <div class="form-group">
+                    <label for="input-account">Account Number</label>
+                    <input type="text" id="input-account" class="form-control" value="6953035265">
+                </div>
+                <div class="form-group">
+                    <label for="input-report-date">Report Date (≥ Period To Date)</label>
+                    <input type="date" id="input-report-date" class="form-control" onchange="onReportDateChange()">
+                </div>
+            </div>
+
+            <!-- Raw Materials Editor Section -->
+            <div class="editor-section">
+                <div class="editor-section-header">
+                    <h3>Raw Materials</h3>
+                    <button class="add-btn" onclick="addEditorRow('raw')">+ Add Raw Material</button>
+                </div>
+                <table class="editor-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%; text-align: center;">Lock</th>
+                            <th style="width: 35%;">Description</th>
+                            <th style="width: 17%; text-align: right;">Quantity</th>
+                            <th style="width: 10%;">Unit</th>
+                            <th style="width: 15%; text-align: right;">Unit Rate (₹)</th>
+                            <th style="width: 15%; text-align: right;">Value (₹)</th>
+                            <th style="width: 3%; text-align: center;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="editor-raw-body">
+                        <!-- Dynamic editor rows with lock buttons -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Block Details Editor Section -->
+            <div class="editor-section">
+                <div class="editor-section-header">
+                    <h3>Block Details</h3>
+                    <button class="add-btn" onclick="addEditorRow('blocks')">+ Add Block</button>
+                </div>
+                <table class="editor-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%; text-align: center;">Lock</th>
+                            <th style="width: 35%;">Description</th>
+                            <th style="width: 17%; text-align: right;">Quantity</th>
+                            <th style="width: 10%;">Unit</th>
+                            <th style="width: 15%; text-align: right;">Unit Rate (₹)</th>
+                            <th style="width: 15%; text-align: right;">Value (₹)</th>
+                            <th style="width: 3%; text-align: center;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="editor-blocks-body">
+                        <!-- Dynamic editor rows with lock buttons -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Live Editor Summary & Big Generate Button -->
+            <div class="editor-summary-bar">
+                <div>
+                    Current Grand Total: <span id="editor-live-grand-total" class="sum-val">₹ 0</span>
+                </div>
+                <button class="btn btn-generate" onclick="generateReportView()">
+                    ✨ Generate Report Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         2. GENERATED REPORT PREVIEW (Letterhead Document View)
+         ========================================================= -->
+    <div id="report-view">
+        
+        <!-- Action Toolbar with Download PDF, Share, Edit, Print -->
+        <div class="report-toolbar" id="report-toolbar">
+            <div class="report-toolbar-info">
+                <span>✅</span> <strong>Report Generated</strong> (Ready for Download / Share)
+            </div>
+            <div class="editor-actions">
+                <button class="btn btn-secondary" onclick="switchToEditor()" title="Modify report values">
+                    ✏️ Edit Values
+                </button>
+                <button class="btn btn-random" onclick="regenerateAndRefresh()" title="Regenerate random values directly">
+                    🎲 Regenerate
+                </button>
+                <button class="btn btn-primary" onclick="downloadPdfDirect()" title="Directly download PDF file">
+                    📥 Download PDF
+                </button>
+                <button class="btn btn-success" onclick="shareReport()" title="Share report">
+                    📤 Share
+                </button>
+                <button class="btn btn-outline" onclick="window.print()" title="Print report">
+                    🖨️ Print
+                </button>
+            </div>
+        </div>
+
+        <!-- Printable Official Report Card -->
+        <div class="report-container" id="printable-report">
+            <div class="report-header">
+                <div class="logo-container">
+                    <img id="company-logo-img" src="logo2_6.png" alt="Yoga Paver Block Logo" onerror="this.style.display='none'">
+                </div>
+                <div class="company-info">
+                    <h1 class="company-name">YOGA PAVER BLOCK</h1>
+                    <div class="report-title-text" id="report-title-text">Stock Details Report</div>
+                </div>
+            </div>
+
+            <div class="report-meta">
+                <div>Period: <span id="period-dates-display"></span></div>
+                <div>Account: <span id="account-display">6953035265</span></div>
+                <div>Report Date: <span id="report-date-display"></span></div>
+            </div>
+
+            <div class="report-section">
+                <h2>Raw Materials</h2>
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Quantity</th>
+                            <th>Value (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-raw-body">
+                        <!-- Injected after Generation -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="report-section">
+                <h2>Block Details</h2>
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Quantity</th>
+                            <th>Value (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-blocks-body">
+                        <!-- Injected after Generation -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Light Elegant Grand Total Container -->
+            <div class="grand-total-container">
+                <span class="grand-total-label">Grand Total Value</span>
+                <div>
+                    <span id="report-grand-total" class="grand-total-amount">₹ 0</span>
+                </div>
+            </div>
+
+            <div class="report-footer">
+                <div class="footer-note">
+                    * This report is computer generated and does not require any signature.
+                </div>
+                <div class="footer-sign">
+                    <!-- With column-reverse: p renders at bottom, seal renders above overlapping it -->
+                    <p>for <strong>Yoga Paver Block</strong></p>
+                    
+                    <img id="seal-img" class="seal" alt="Yoga Paver Block Seal">
+
+                    <svg id="seal-svg" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" style="display:none">
+                        <defs>
+                            <path id="topArc" d="M 20 70 A 50 50 0 0 1 120 70" />
+                            <path id="bottomArc" d="M 20 70 A 50 50 0 0 0 120 70" />
+                        </defs>
+                        
+                        <circle cx="70" cy="70" r="65" fill="none" stroke="#2b6cb0" stroke-width="2"/>
+                        <circle cx="70" cy="70" r="60" fill="none" stroke="#2b6cb0" stroke-width="1"/>
+                        <circle cx="70" cy="70" r="40" fill="none" stroke="#2b6cb0" stroke-width="1"/>
+                        
+                        <text id="seal-date" x="70" y="75" font-family="Arial, sans-serif" font-size="15" fill="#2b6cb0" text-anchor="middle" font-weight="bold"></text>
+                        
+                        <text font-family="Arial, sans-serif" font-size="12" fill="#2b6cb0" font-weight="bold" letter-spacing="1.5">
+                            <textPath href="#topArc" startOffset="50%" text-anchor="middle">YOGA PAVER BLOCK</textPath>
+                        </text>
+                        
+                        <text font-family="Arial, sans-serif" font-size="12" fill="#2b6cb0" font-weight="bold" letter-spacing="1.5">
+                            <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">* CHENGALPATTU *</textPath> 
+                        </text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+    const baseRates = {
+        cement: 385,
+        blueMetal: 850,
+        mSand: 975,
+        solid4: 32,
+        solid6: 42,
+        hollow4: 30, 
+        hollow6: 35
+    };
+
+    let stockData = {
+        account: "6953035265",
+        raw: [
+            { id: 1, name: 'Cement bags', qty: 200, unit: 'Bags', rate: 385, locked: false },
+            { id: 2, name: '6mm Blue Metals', qty: 42, unit: 'Tonne', rate: 850, locked: false },
+            { id: 3, name: 'M-Sand', qty: 45, unit: 'Tonne', rate: 975, locked: false }
+        ],
+        blocks: [
+            { id: 101, name: '4’’ Solid block', qty: 8500, unit: '', rate: 32, locked: false },
+            { id: 102, name: '6” Solid block', qty: 9000, unit: '', rate: 42, locked: false },
+            { id: 103, name: '4” Hollow Block', qty: 1500, unit: '', rate: 30, locked: false },
+            { id: 104, name: '6” Hollow Block', qty: 8500, unit: '', rate: 35, locked: false },
+            { id: 105, name: '8” Solid block', qty: 0, unit: '', rate: 0, locked: false } 
+        ]
+    };
+
+    function getRand(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function formatNumber(num) {
+        if (num === null || num === undefined || isNaN(num)) return "0";
+        return Number(num).toLocaleString('en-IN');
+    }
+
+    function formatDateInput(date) {
+        const y = date.getFullYear();
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const d = date.getDate().toString().padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function formatDisplayDate(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        return dateStr;
+    }
+
+    function formatSealDate(date) {
+        let d = date.getDate().toString().padStart(2, '0');
+        let m = (date.getMonth() + 1).toString().padStart(2, '0');
+        let yy = date.getFullYear().toString().slice(-2);
+        return `${d}.${m}.${yy}`; 
+    }
+
+    // Format "2026-08-29" → "29th August 2026"
+    function formatOrdinalDate(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr + 'T00:00:00');
+        const day = date.getDate();
+        const year = date.getFullYear();
+        const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+        const month = months[date.getMonth()];
+
+        // Ordinal suffix
+        let suffix = 'th';
+        if (day === 1 || day === 21 || day === 31) suffix = 'st';
+        else if (day === 2 || day === 22) suffix = 'nd';
+        else if (day === 3 || day === 23) suffix = 'rd';
+
+        return `${day}${suffix} ${month} ${year}`;
+    }
+
+    function initDates() {
+        const today = new Date();
+        const toDate = new Date(today);
+        toDate.setDate(today.getDate() - 1);
+        
+        const fromDate = new Date(toDate);
+        fromDate.setMonth(toDate.getMonth() - 3);
+
+        const fromStr = formatDateInput(fromDate);
+        const toStr = formatDateInput(toDate);
+        const reportStr = formatDateInput(today);
+
+        document.getElementById('input-period-from').value = fromStr;
+        document.getElementById('input-period-to').value = toStr;
+        document.getElementById('input-report-date').value = reportStr;
+
+        // Apply HTML5 date range constraints
+        document.getElementById('input-period-to').min = fromStr;
+        document.getElementById('input-report-date').min = toStr;
+
+        document.getElementById('seal-date').textContent = formatSealDate(today);
+    }
+
+    /* Date Validation Logic: Report Date cannot be before Period To Date */
+    function onPeriodFromChange() {
+        const fromVal = document.getElementById('input-period-from').value;
+        const toInput = document.getElementById('input-period-to');
+
+        if (fromVal) {
+            toInput.min = fromVal;
+            if (toInput.value && toInput.value < fromVal) {
+                toInput.value = fromVal;
+                onPeriodToChange();
+            }
+        }
+    }
+
+    function onPeriodToChange() {
+        const toVal = document.getElementById('input-period-to').value;
+        const reportInput = document.getElementById('input-report-date');
+
+        if (toVal) {
+            reportInput.min = toVal;
+            // Enforce: Report Date must be >= Period To Date
+            if (reportInput.value && reportInput.value < toVal) {
+                reportInput.value = toVal;
+                showToast(`ℹ️ Report Date updated to match Period To Date (${formatDisplayDate(toVal)}).`);
+                onReportDateChange();
+            }
+        }
+    }
+
+    function onReportDateChange() {
+        const toVal = document.getElementById('input-period-to').value;
+        const reportInput = document.getElementById('input-report-date');
+        const reportVal = reportInput.value;
+
+        if (reportVal && toVal && reportVal < toVal) {
+            // Revert and clamp
+            reportInput.value = toVal;
+            showToast(`⚠️ Report Date cannot be before Period To Date (${formatDisplayDate(toVal)})!`, true);
+        }
+
+        updateSealImage();
+    }
+
+    function updateSealImage() {
+        const toVal = document.getElementById('input-period-to')?.value;
+        const reportInput = document.getElementById('input-report-date');
+        let reportVal = reportInput ? reportInput.value : '';
+
+        if (!reportVal && toVal) reportVal = toVal;
+
+        let sealDateStr = '';
+        if (reportVal) {
+            const parts = reportVal.split('-');
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            sealDateStr = formatSealDate(d);
+        } else {
+            sealDateStr = formatSealDate(new Date());
+        }
+
+        const sealDateEl = document.getElementById('seal-date');
+        if (sealDateEl) sealDateEl.textContent = sealDateStr;
+
+        const sealSvg = document.getElementById('seal-svg');
+        if (!sealSvg) return;
+
+        // Render SVG to 280x280 PNG
+        const svgData = new XMLSerializer().serializeToString(sealSvg);
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 280;
+            canvas.height = 280;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, 280, 280);
+            const pngUrl = canvas.toDataURL('image/png');
+            const sealImg = document.getElementById('seal-img');
+            if (sealImg) sealImg.src = pngUrl;
+        };
+        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+    }
+
+    // Toggle Lock on specific row
+    function toggleRowLock(sectionKey, id) {
+        const item = stockData[sectionKey].find(x => x.id === id);
+        if (item) {
+            item.locked = !item.locked;
+            renderEditorSection(sectionKey);
+            showToast(item.locked ? `🔒 "${item.name}" locked from auto-generation.` : `🔓 "${item.name}" unlocked.`);
+        }
+    }
+
+    // Smart Random Balancing Algorithm based on Target Total & Locked Rows
+    function autoBalanceToTargetTotal() {
+        syncEditorDataToObject();
+
+        const targetTotal = parseFloat(document.getElementById('input-target-total').value) || 1200000;
+
+        let lockedSum = 0;
+        let unlockedItems = [];
+
+        ['raw', 'blocks'].forEach(sectionKey => {
+            stockData[sectionKey].forEach(item => {
+                if (item.locked) {
+                    lockedSum += Math.round(item.qty * item.rate);
+                } else if (item.rate > 0 || (item.qty === 0 && item.rate === 0 && item.id === 105)) {
+                    if (item.id !== 105) {
+                        unlockedItems.push({ item, sectionKey });
+                    }
+                }
+            });
+        });
+
+        if (unlockedItems.length === 0) {
+            showToast("All items are locked! Unlock at least one item to balance.", true);
+            return;
+        }
+
+        const remainingTarget = targetTotal - lockedSum;
+        if (remainingTarget <= 0) {
+            showToast("⚠️ Locked items exceed target total! Increase target or unlock items.", true);
+            return;
+        }
+
+        let sampleSum = 0;
+        unlockedItems.forEach(({ item }) => {
+            if (!item.rate || item.rate <= 0) {
+                if (item.name.includes('Cement')) item.rate = baseRates.cement + getRand(-10, 15);
+                else if (item.name.includes('Blue Metal')) item.rate = baseRates.blueMetal + getRand(-10, 15);
+                else if (item.name.includes('M-Sand')) item.rate = baseRates.mSand + getRand(-10, 15);
+                else if (item.name.includes('4’’') || item.name.includes('4" Solid')) item.rate = baseRates.solid4 + getRand(-5, 8);
+                else if (item.name.includes('6” Solid') || item.name.includes('6" Solid')) item.rate = baseRates.solid6 + getRand(-5, 8);
+                else if (item.name.includes('4” Hollow') || item.name.includes('4" Hollow')) item.rate = baseRates.hollow4 + getRand(-5, 8);
+                else if (item.name.includes('6” Hollow') || item.name.includes('6" Hollow')) item.rate = baseRates.hollow6 + getRand(-5, 8);
+                else item.rate = 35;
+            } else {
+                item.rate = item.rate + getRand(-2, 2);
+            }
+
+            if (item.name.includes('Cement')) item.tempQty = getRand(170, 240);
+            else if (item.name.includes('Blue Metal')) item.tempQty = getRand(35, 48);
+            else if (item.name.includes('M-Sand')) item.tempQty = getRand(38, 50);
+            else if (item.name.includes('4’’') || item.name.includes('4" Solid')) item.tempQty = getRand(7500, 9500);
+            else if (item.name.includes('6” Solid') || item.name.includes('6" Solid')) item.tempQty = getRand(8000, 10000);
+            else if (item.name.includes('4” Hollow') || item.name.includes('4" Hollow')) item.tempQty = getRand(500, 2500);
+            else if (item.name.includes('6” Hollow') || item.name.includes('6" Hollow')) item.tempQty = getRand(7500, 9500);
+            else item.tempQty = getRand(100, 1000);
+
+            sampleSum += (item.tempQty * item.rate);
+        });
+
+        const scaleFactor = remainingTarget / sampleSum;
+        let currentUnlockedSum = 0;
+
+        unlockedItems.forEach(({ item }) => {
+            let scaledQty = item.tempQty * scaleFactor;
+            
+            if (item.name.includes('Cement')) item.qty = Math.round(scaledQty / 5) * 5;
+            else if (item.name.includes('Blue Metal') || item.name.includes('M-Sand')) item.qty = Math.round(scaledQty);
+            else if (item.name.includes('block') || item.name.includes('Block')) item.qty = Math.round(scaledQty / 50) * 50;
+            else item.qty = Math.round(scaledQty);
+
+            currentUnlockedSum += Math.round(item.qty * item.rate);
+        });
+
+        // Exact Adjustments to hit target precisely down to the last rupee without any ± difference
+        let diff = remainingTarget - currentUnlockedSum;
+        if (diff !== 0 && unlockedItems.length > 0) {
+            const isAccurate = document.getElementById('chk-accurate-match').checked;
+            
+            // Find a raw material item measured in Tonne/Bags to absorb the difference
+            let flexItemObj = unlockedItems.find(x => x.item.unit && x.item.unit.toLowerCase() === 'tonne');
+            if (!flexItemObj) {
+                flexItemObj = unlockedItems.find(x => x.item.unit && x.item.unit.toLowerCase() === 'bags');
+            }
+            if (!flexItemObj) {
+                flexItemObj = unlockedItems[unlockedItems.length - 1];
+            }
+            const flexItem = flexItemObj.item;
+            if (flexItem.rate > 0) {
+                if (isAccurate) {
+                    // Allow exact decimal quantity to hit the target perfectly
+                    const exactValueNeeded = Math.round(flexItem.qty * flexItem.rate) + diff;
+                    flexItem.qty = parseFloat((exactValueNeeded / flexItem.rate).toFixed(4));
+                } else {
+                    // Traditional integer-only adjustments (might have minor roundoff mismatch)
+                    const adjQty = Math.round(diff / flexItem.rate);
+                    flexItem.qty = Math.max(0, flexItem.qty + adjQty);
+                }
+            }
+        }
+
+        renderEditorTables();
+        updateEditorLiveCalculations();
+    }
+
+    function regenerateRandomData() {
+        autoBalanceToTargetTotal();
+        showToast("Balanced to target grand total!");
+    }
+
+    function regenerateAndRefresh() {
+        autoBalanceToTargetTotal();
+        generateReportView();
+    }
+
+    // Render Editor Tables
+    function renderEditorSection(sectionKey) {
+        const tbody = document.getElementById(sectionKey === 'raw' ? 'editor-raw-body' : 'editor-blocks-body');
+        tbody.innerHTML = '';
+
+        stockData[sectionKey].forEach(item => {
+            const tr = document.createElement('tr');
+            if (item.locked) tr.classList.add('is-locked');
+            const rowVal = Math.round((item.qty || 0) * (item.rate || 0));
+
+            tr.innerHTML = `
+                <td style="text-align: center;">
+                    <button class="lock-btn ${item.locked ? 'locked' : ''}" onclick="toggleRowLock('${sectionKey}', ${item.id})" title="${item.locked ? 'Click to Unlock' : 'Click to Lock value during auto-generation'}">
+                        ${item.locked ? '🔒' : '🔓'}
+                    </button>
+                </td>
+                <td>
+                    <input type="text" class="editor-input-text" id="ed-name-${sectionKey}-${item.id}" value="${item.name}" oninput="updateEditorLiveCalculations()">
+                </td>
+                <td>
+                    <input type="number" class="editor-input-num" id="ed-qty-${sectionKey}-${item.id}" value="${item.qty}" min="0" step="any" oninput="updateEditorLiveCalculations()">
+                </td>
+                <td>
+                    <input type="text" class="editor-input-text" id="ed-unit-${sectionKey}-${item.id}" value="${item.unit || ''}" placeholder="unit" oninput="updateEditorLiveCalculations()">
+                </td>
+                <td>
+                    <input type="number" class="editor-input-num" id="ed-rate-${sectionKey}-${item.id}" value="${item.rate}" min="0" step="any" oninput="updateEditorLiveCalculations()">
+                </td>
+                <td class="live-row-val" id="ed-val-${sectionKey}-${item.id}">
+                    ${(item.qty === 0 || item.rate === 0) ? '<span class="nil-value">Nil</span>' : '₹ ' + formatNumber(rowVal)}
+                </td>
+                <td style="text-align: center;">
+                    <button class="delete-row-btn" onclick="deleteEditorRow('${sectionKey}', ${item.id})" title="Remove item">×</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderEditorTables() {
+        renderEditorSection('raw');
+        renderEditorSection('blocks');
+    }
+
+    function addEditorRow(sectionKey) {
+        const newId = Date.now();
+        stockData[sectionKey].push({
+            id: newId,
+            name: sectionKey === 'raw' ? 'New Material' : 'New Block',
+            qty: 0,
+            unit: sectionKey === 'raw' ? 'Bags' : '',
+            rate: 0,
+            locked: false
+        });
+        renderEditorSection(sectionKey);
+        updateEditorLiveCalculations();
+    }
+
+    function deleteEditorRow(sectionKey, id) {
+        stockData[sectionKey] = stockData[sectionKey].filter(item => item.id !== id);
+        renderEditorSection(sectionKey);
+        updateEditorLiveCalculations();
+    }
+
+    function syncEditorDataToObject() {
+        ['raw', 'blocks'].forEach(sectionKey => {
+            stockData[sectionKey].forEach(item => {
+                const nameEl = document.getElementById(`ed-name-${sectionKey}-${item.id}`);
+                const qtyEl = document.getElementById(`ed-qty-${sectionKey}-${item.id}`);
+                const unitEl = document.getElementById(`ed-unit-${sectionKey}-${item.id}`);
+                const rateEl = document.getElementById(`ed-rate-${sectionKey}-${item.id}`);
+
+                if (nameEl) item.name = nameEl.value;
+                if (qtyEl) item.qty = parseFloat(qtyEl.value) || 0;
+                if (unitEl) item.unit = unitEl.value;
+                if (rateEl) item.rate = parseFloat(rateEl.value) || 0;
+            });
+        });
+        stockData.account = document.getElementById('input-account').value || "6953035265";
+    }
+
+    function updateEditorLiveCalculations() {
+        syncEditorDataToObject();
+        let total = 0;
+
+        ['raw', 'blocks'].forEach(sectionKey => {
+            stockData[sectionKey].forEach(item => {
+                const rowVal = Math.round(item.qty * item.rate);
+                total += rowVal;
+
+                const valEl = document.getElementById(`ed-val-${sectionKey}-${item.id}`);
+                if (valEl) {
+                    valEl.innerHTML = (item.qty === 0 || item.rate === 0) 
+                        ? '<span class="nil-value">Nil</span>' 
+                        : `₹ ${formatNumber(rowVal)}`;
+                }
+            });
+        });
+
+        document.getElementById('editor-live-grand-total').innerText = `₹ ${formatNumber(total)}`;
+    }
+
+    // =========================================================
+    // GENERATE REPORT (With strict Date Validation)
+    // =========================================================
+    function generateReportView() {
+        const fromDateStr = document.getElementById('input-period-from').value;
+        const toDateStr = document.getElementById('input-period-to').value;
+        const reportDateStr = document.getElementById('input-report-date').value;
+        const accountStr = document.getElementById('input-account').value;
+
+        // Date Validation Checks
+        if (!fromDateStr || !toDateStr || !reportDateStr) {
+            showToast("⚠️ Please enter all date fields.", true);
+            return;
+        }
+
+        if (toDateStr < fromDateStr) {
+            showToast("⚠️ Period To Date cannot be earlier than Period From Date.", true);
+            document.getElementById('input-period-to').focus();
+            return;
+        }
+
+        if (reportDateStr < toDateStr) {
+            showToast(`⚠️ Report Date cannot be before Period To Date (${formatDisplayDate(toDateStr)})!`, true);
+            document.getElementById('input-report-date').focus();
+            return;
+        }
+
+        syncEditorDataToObject();
+
+        // 1. Update Meta in Report
+        document.getElementById('period-dates-display').innerText = `(${formatDisplayDate(fromDateStr)} to ${formatDisplayDate(toDateStr)})`;
+        document.getElementById('account-display').innerText = accountStr;
+        document.getElementById('report-date-display').innerText = formatDisplayDate(reportDateStr);
+
+        // Update report title with ordinal date format
+        document.getElementById('report-title-text').innerText = `Stock Details Report as on ${formatOrdinalDate(toDateStr)}`;
+
+        onReportDateChange();
+
+        // 2. Render Raw Materials & Block Details
+        renderReportTableSection('raw', 'report-raw-body');
+        renderReportTableSection('blocks', 'report-blocks-body');
+
+        // 3. Compute Grand Total
+        let grandTotal = 0;
+        [...stockData.raw, ...stockData.blocks].forEach(item => {
+            grandTotal += Math.round(item.qty * item.rate);
+        });
+        document.getElementById('report-grand-total').innerText = `₹ ${formatNumber(grandTotal)}`;
+
+        // 4. Transition Views
+        document.getElementById('editor-view').style.display = 'none';
+        document.getElementById('report-view').style.display = 'block';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToast("Report generated successfully!");
+    }
+
+    function renderReportTableSection(sectionKey, tbodyId) {
+        const tbody = document.getElementById(tbodyId);
+        tbody.innerHTML = '';
+        let sectionTotal = 0;
+
+        stockData[sectionKey].forEach(item => {
+            const tr = document.createElement('tr');
+            const val = Math.round(item.qty * item.rate);
+            sectionTotal += val;
+
+            const qtyStr = item.qty === 0 
+                ? '<span class="nil-value">Nil</span>' 
+                : `${formatNumber(item.qty)} ${item.unit || ''}`.trim();
+            const valStr = val === 0 
+                ? '<span class="nil-value">Nil</span>' 
+                : formatNumber(val);
+
+            tr.innerHTML = `
+                <td>${item.name}</td>
+                <td>${qtyStr}</td>
+                <td>${valStr}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Totals Row
+        const totalTr = document.createElement('tr');
+        totalTr.className = 'totals-row';
+        totalTr.innerHTML = `
+            <td colspan="2" style="text-align: left;">Total</td>
+            <td style="text-align: right;">₹ ${formatNumber(sectionTotal)}</td>
+        `;
+        tbody.appendChild(totalTr);
+    }
+
+    function switchToEditor() {
+        document.getElementById('report-view').style.display = 'none';
+        document.getElementById('editor-view').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // =========================================================
+    // DIRECT PDF DOWNLOAD
+    // =========================================================
+    async function downloadPdfDirect() {
+        const reportDateStr = formatDisplayDate(document.getElementById('input-report-date').value) || 'Report';
+        const filename = `Yoga_Paver_Stock_Report_${reportDateStr}.pdf`;
+
+        showToast("📄 Generating PDF…");
+
+        // Ensure logo uses base64 if available to avoid canvas tainting
+        if (typeof COMPANY_LOGO_BASE64 !== 'undefined') {
+            const logoEl = document.getElementById('company-logo-img');
+            if (logoEl && !logoEl.src.startsWith('data:')) {
+                logoEl.src = COMPANY_LOGO_BASE64;
+            }
+        }
+
+        // Ensure seal image is rendered and ready before PDF capture
+        updateSealImage();
+        await new Promise(r => setTimeout(r, 100));
+
+        // Temporarily hide the toolbar so it doesn't bleed into the capture
+        const toolbar = document.getElementById('report-toolbar');
+        const origToolbarDisplay = toolbar.style.display;
+        toolbar.style.display = 'none';
+
+        const element = document.getElementById('printable-report');
+
+        const opt = {
+            margin:       [6, 6, 6, 6],
+            filename:     filename,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  {
+                scale: 2,
+                useCORS: true,
+                letterRendering: true,
+                scrollY: 0
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        try {
+            if (typeof html2pdf === 'undefined') {
+                throw new Error('html2pdf library is not loaded');
+            }
+
+            await html2pdf().set(opt).from(element).save();
+            showToast("✅ PDF downloaded: " + filename);
+        } catch (err) {
+            console.error('PDF generation failed:', err);
+            showToast("⚠️ PDF generation failed: " + (err.message || err), true);
+        } finally {
+            toolbar.style.display = origToolbarDisplay;
+        }
+    }
+
+    // =========================================================
+    // SHARE REPORT (PDF file share if supported, text fallback)
+    // =========================================================
+    async function shareReport() {
+        const reportDate = formatDisplayDate(document.getElementById('input-report-date').value);
+        const fromDate = formatDisplayDate(document.getElementById('input-period-from').value);
+        const toDate = formatDisplayDate(document.getElementById('input-period-to').value);
+        const account = document.getElementById('input-account').value;
+        const grandTotal = document.getElementById('report-grand-total').innerText;
+        const filename = `Yoga_Paver_Stock_Report_${reportDate}.pdf`;
+
+        const summaryText =
+            `*YOGA PAVER BLOCK*\n` +
+            `*Stock Details Report*\n` +
+            `📅 Period: ${fromDate} to ${toDate}\n` +
+            `🏢 Account: ${account}\n` +
+            `🗓️ Report Date: ${reportDate}\n` +
+            `💰 Grand Total Stock Value: ${grandTotal}`;
+
+        // Ensure logo uses base64
+        if (typeof COMPANY_LOGO_BASE64 !== 'undefined') {
+            const logoEl = document.getElementById('company-logo-img');
+            if (logoEl && !logoEl.src.startsWith('data:')) {
+                logoEl.src = COMPANY_LOGO_BASE64;
+            }
+        }
+
+        // Ensure seal image is updated and ready
+        updateSealImage();
+        await new Promise(r => setTimeout(r, 100));
+
+        // Try to share PDF file via Web Share API (supported on mobile / modern browsers)
+        if (navigator.canShare && typeof html2pdf !== 'undefined') {
+            try {
+                showToast("📤 Preparing report for sharing…");
+
+                const toolbar = document.getElementById('report-toolbar');
+                toolbar.style.display = 'none';
+                const element = document.getElementById('printable-report');
+
+                const opt = {
+                    margin: [6, 6, 6, 6],
+                    filename: filename,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+                toolbar.style.display = '';
+
+                const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+                const shareData = {
+                    title: `Yoga Paver Block Stock Report (${reportDate})`,
+                    text: summaryText,
+                    files: [pdfFile]
+                };
+
+                if (navigator.canShare(shareData)) {
+                    await navigator.share(shareData);
+                    showToast("✅ Report shared successfully!");
+                    return;
+                }
+            } catch (err) {
+                document.getElementById('report-toolbar').style.display = '';
+                if (err.name === 'AbortError') return;
+                console.warn('File share failed, falling back:', err);
+            }
+        }
+
+        // Fallback: text-only share via Web Share API
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `Yoga Paver Block Stock Report (${reportDate})`,
+                    text: summaryText
+                });
+                showToast("✅ Report shared successfully!");
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+            }
+        }
+
+        // Final fallback: copy to clipboard
+        copyToClipboard(summaryText);
+    }
+
+
+
+    // =========================================================
+    // DOWNLOAD & UPLOAD XML DATA
+    // =========================================================
+    function downloadXmlData() {
+        syncEditorDataToObject();
+        
+        const fromDate = document.getElementById('input-period-from').value;
+        const toDate = document.getElementById('input-period-to').value;
+        const reportDate = document.getElementById('input-report-date').value;
+        const targetTotal = document.getElementById('input-target-total').value;
+        const account = stockData.account;
+        const isAccurate = document.getElementById('chk-accurate-match').checked;
+
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        xml += `<YogaStockData>\n`;
+        xml += `    <Account>${escapeXml(account)}</Account>\n`;
+        xml += `    <TargetTotal>${targetTotal}</TargetTotal>\n`;
+        xml += `    <AccurateMatch>${isAccurate}</AccurateMatch>\n`;
+        xml += `    <PeriodFrom>${fromDate}</PeriodFrom>\n`;
+        xml += `    <PeriodTo>${toDate}</PeriodTo>\n`;
+        xml += `    <ReportDate>${reportDate}</ReportDate>\n`;
+        
+        xml += `    <RawMaterials>\n`;
+        stockData.raw.forEach(item => {
+            xml += `        <Item>\n`;
+            xml += `            <Id>${item.id}</Id>\n`;
+            xml += `            <Name>${escapeXml(item.name)}</Name>\n`;
+            xml += `            <Qty>${item.qty}</Qty>\n`;
+            xml += `            <Unit>${escapeXml(item.unit || '')}</Unit>\n`;
+            xml += `            <Rate>${item.rate}</Rate>\n`;
+            xml += `            <Locked>${item.locked}</Locked>\n`;
+            xml += `        </Item>\n`;
+        });
+        xml += `    </RawMaterials>\n`;
+
+        xml += `    <Blocks>\n`;
+        stockData.blocks.forEach(item => {
+            xml += `        <Item>\n`;
+            xml += `            <Id>${item.id}</Id>\n`;
+            xml += `            <Name>${escapeXml(item.name)}</Name>\n`;
+            xml += `            <Qty>${item.qty}</Qty>\n`;
+            xml += `            <Unit>${escapeXml(item.unit || '')}</Unit>\n`;
+            xml += `            <Rate>${item.rate}</Rate>\n`;
+            xml += `            <Locked>${item.locked}</Locked>\n`;
+            xml += `        </Item>\n`;
+        });
+        xml += `    </Blocks>\n`;
+        xml += `</YogaStockData>`;
+
+        const blob = new Blob([xml], { type: 'application/xml' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Yoga_Stock_Data_${toDate || 'Backup'}.xml`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        showToast("✅ XML backup downloaded!");
+    }
+
+    function escapeXml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe.replace(/[<>&'"]/g, function (c) {
+            switch (c) {
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '&': return '&amp;';
+                case '\'': return '&apos;';
+                case '"': return '&quot;';
+            }
+            return c;
+        });
+    }
+
+    function handleXmlUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const xmlText = e.target.result;
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "application/xml");
+                
+                const parseError = xmlDoc.getElementsByTagName("parsererror");
+                if (parseError.length > 0) {
+                    throw new Error("Invalid XML file format.");
+                }
+
+                const account = xmlDoc.getElementsByTagName("Account")[0]?.textContent || "6953035265";
+                const targetTotal = xmlDoc.getElementsByTagName("TargetTotal")[0]?.textContent || "1200000";
+                const isAccurate = xmlDoc.getElementsByTagName("AccurateMatch")[0]?.textContent === "true";
+                const periodFrom = xmlDoc.getElementsByTagName("PeriodFrom")[0]?.textContent || "";
+                const periodTo = xmlDoc.getElementsByTagName("PeriodTo")[0]?.textContent || "";
+                const reportDate = xmlDoc.getElementsByTagName("ReportDate")[0]?.textContent || "";
+
+                document.getElementById('input-account').value = account;
+                document.getElementById('input-target-total').value = targetTotal;
+                document.getElementById('chk-accurate-match').checked = isAccurate;
+                document.getElementById('input-period-from').value = periodFrom;
+                document.getElementById('input-period-to').value = periodTo;
+                document.getElementById('input-report-date').value = reportDate;
+
+                // Fire input/change events to update constraints
+                onPeriodFromChange();
+                onPeriodToChange();
+                onReportDateChange();
+
+                const rawItems = xmlDoc.getElementsByTagName("RawMaterials")[0]?.getElementsByTagName("Item") || [];
+                const newRaw = [];
+                for (let i = 0; i < rawItems.length; i++) {
+                    const el = rawItems[i];
+                    newRaw.push({
+                        id: parseInt(el.getElementsByTagName("Id")[0]?.textContent) || Date.now() + i,
+                        name: el.getElementsByTagName("Name")[0]?.textContent || "Material",
+                        qty: parseFloat(el.getElementsByTagName("Qty")[0]?.textContent) || 0,
+                        unit: el.getElementsByTagName("Unit")[0]?.textContent || "",
+                        rate: parseFloat(el.getElementsByTagName("Rate")[0]?.textContent) || 0,
+                        locked: el.getElementsByTagName("Locked")[0]?.textContent === "true"
+                    });
+                }
+
+                const blockItems = xmlDoc.getElementsByTagName("Blocks")[0]?.getElementsByTagName("Item") || [];
+                const newBlocks = [];
+                for (let i = 0; i < blockItems.length; i++) {
+                    const el = blockItems[i];
+                    newBlocks.push({
+                        id: parseInt(el.getElementsByTagName("Id")[0]?.textContent) || Date.now() + 100 + i,
+                        name: el.getElementsByTagName("Name")[0]?.textContent || "Block",
+                        qty: parseFloat(el.getElementsByTagName("Qty")[0]?.textContent) || 0,
+                        unit: el.getElementsByTagName("Unit")[0]?.textContent || "",
+                        rate: parseFloat(el.getElementsByTagName("Rate")[0]?.textContent) || 0,
+                        locked: el.getElementsByTagName("Locked")[0]?.textContent === "true"
+                    });
+                }
+
+                if (newRaw.length > 0 || newBlocks.length > 0) {
+                    stockData.account = account;
+                    if (newRaw.length > 0) stockData.raw = newRaw;
+                    if (newBlocks.length > 0) stockData.blocks = newBlocks;
+                    
+                    renderEditorTables();
+                    updateEditorLiveCalculations();
+                    showToast("✅ XML data loaded successfully!");
+                } else {
+                    showToast("⚠️ XML loaded but no stock items found.", true);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("❌ XML Error: " + err.message, true);
+            }
+            event.target.value = "";
+        };
+        reader.readAsText(file);
+    }
+
+    function copyToClipboard(text) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Report summary copied to clipboard!");
+            }).catch(() => {
+                prompt("Copy report summary:", text);
+            });
+        } else {
+            prompt("Copy report summary:", text);
+        }
+    }
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        if (isError) {
+            toast.classList.add('toast-error');
+        } else {
+            toast.classList.remove('toast-error');
+        }
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3400);
+    }
+
+    // Initialize application on load
+    window.addEventListener('DOMContentLoaded', () => {
+        if (typeof COMPANY_LOGO_BASE64 !== 'undefined') {
+            const logoEl = document.getElementById('company-logo-img');
+            if (logoEl) logoEl.src = COMPANY_LOGO_BASE64;
+        }
+        initDates();
+        autoBalanceToTargetTotal();
+        updateSealImage();
+    });
+</script>
+
+</body>
+</html>
