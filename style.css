@@ -1018,37 +1018,40 @@ body {
         background: transparent !important;
     }
 
-    /* Top Row: S.No (1) + Description (2, Expanded & comfortably fitted) + Lock (3) + Delete (4) */
+    /* Top Row: S.No (1) + Description (2, Compresses smoothly to fit Lock & Delete) + Lock (3) + Delete (4) */
     .cell-sno {
         order: 1;
         background: #e0e7ff;
         color: #4338ca;
         font-weight: 800;
-        font-size: 13px;
-        min-width: 28px;
-        max-width: 28px;
-        height: 36px;
+        font-size: 12px;
+        width: 26px;
+        min-width: 26px;
+        max-width: 26px;
+        height: 34px;
         border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
-        flex: 0 0 28px;
+        flex: 0 0 26px;
     }
 
     .cell-desc {
         order: 2;
-        flex: 1 1 140px !important; /* Ample space for particulars, forces Quantity to Row 2 */
-        min-width: 140px !important;
+        flex: 1 1 90px !important; /* Compresses comfortably down to 90px so Lock and Delete NEVER wrap on Row 1 */
+        min-width: 90px !important;
     }
 
     .cell-desc input {
         font-weight: 700;
-        font-size: 14.5px;
+        font-size: 13.5px;
         color: #0f172a;
         background: #f8fafc;
-        padding: 7px 10px;
-        height: 36px;
+        padding: 6px 8px;
+        height: 34px;
         width: 100%;
+        min-width: 0 !important;
+        box-sizing: border-box;
     }
 
     .cell-desc .field-label-mobile {
@@ -1061,9 +1064,9 @@ body {
     }
 
     .lock-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 13.5px;
+        width: 34px;
+        height: 34px;
+        font-size: 13px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -1076,8 +1079,8 @@ body {
 
     .delete-row-btn {
         font-size: 22px;
-        padding: 0 6px;
-        height: 36px;
+        padding: 0 4px;
+        height: 34px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -1120,27 +1123,28 @@ body {
 
     .field-label-mobile {
         display: block;
-        font-size: 10.5px;
+        font-size: 10px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         color: #64748b;
-        margin-bottom: 3px;
+        margin-bottom: 2px;
     }
 
     .editor-input-text, .editor-input-num {
-        font-size: 14px;
-        padding: 8px 10px;
+        font-size: 13.5px;
+        padding: 7px 8px;
         width: 100%;
         min-width: 0;
-        height: 36px;
+        height: 34px;
+        box-sizing: border-box;
     }
 
     .cell-val .val-text {
-        font-size: 14.5px;
+        font-size: 14px;
         font-weight: 800;
         color: #0f172a;
-        padding: 6px 10px;
+        padding: 6px 8px;
         background: #f1f5f9;
         border-radius: 6px;
         border: 1.5px solid #cbd5e1;
@@ -1149,7 +1153,8 @@ body {
         align-items: center;
         justify-content: flex-end;
         width: 100%;
-        height: 36px;
+        height: 34px;
+        box-sizing: border-box;
     }
 
     /* Live Summary Bar */
