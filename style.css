@@ -1018,36 +1018,39 @@ body {
         background: transparent !important;
     }
 
-    /* Top Row: S.No (1) + Description (2, Expanded) + Lock (3) + Delete (4) */
+    /* Top Row: S.No (1) + Description (2, Compresses to fit) + Lock (3) + Delete (4) */
     .cell-sno {
         order: 1;
         background: #e0e7ff;
         color: #4338ca;
         font-weight: 800;
         font-size: 13px;
-        min-width: 30px;
-        height: 38px;
+        min-width: 28px;
+        max-width: 28px;
+        height: 36px;
         border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0;
+        flex: 0 0 28px;
     }
 
     .cell-desc {
         order: 2;
-        flex: 1 1 0%;
-        min-width: 130px;
+        flex: 1 1 0% !important; /* Compresses/shrinks smoothly to keep lock and close button in Row 1 */
+        min-width: 0 !important;
+        overflow: hidden;
     }
 
     .cell-desc input {
         font-weight: 700;
-        font-size: 15px;
+        font-size: 14px;
         color: #0f172a;
         background: #f8fafc;
-        padding: 8px 12px;
-        height: 38px;
+        padding: 7px 9px;
+        height: 36px;
         width: 100%;
+        min-width: 0 !important;
     }
 
     .cell-desc .field-label-mobile {
@@ -1056,77 +1059,90 @@ body {
 
     .cell-lock {
         order: 3;
-        flex-shrink: 0;
+        flex: 0 0 auto;
     }
 
     .lock-btn {
-        width: 38px;
-        height: 38px;
-        font-size: 14px;
+        width: 36px;
+        height: 36px;
+        font-size: 13.5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .cell-del {
         order: 4;
-        flex-shrink: 0;
+        flex: 0 0 auto;
     }
 
     .delete-row-btn {
-        font-size: 24px;
-        padding: 2px 8px;
+        font-size: 22px;
+        padding: 0 6px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         line-height: 1;
     }
 
     /* Row 2 (2 Columns in a Row): Quantity & Unit (50% - 50% split) */
     .cell-qty {
         order: 5;
-        flex: 1 1 calc(50% - 6px);
-        min-width: calc(50% - 6px);
-        max-width: calc(50% - 6px);
+        flex: 0 0 calc(50% - 5px) !important;
+        width: calc(50% - 5px) !important;
+        min-width: calc(50% - 5px) !important;
+        max-width: calc(50% - 5px) !important;
     }
 
     .cell-unit {
         order: 6;
-        flex: 1 1 calc(50% - 6px);
-        min-width: calc(50% - 6px);
-        max-width: calc(50% - 6px);
+        flex: 0 0 calc(50% - 5px) !important;
+        width: calc(50% - 5px) !important;
+        min-width: calc(50% - 5px) !important;
+        max-width: calc(50% - 5px) !important;
     }
 
     /* Row 3 (2 Columns in a Row): Unit Rate & Value (50% - 50% split) */
     .cell-rate {
         order: 7;
-        flex: 1 1 calc(50% - 6px);
-        min-width: calc(50% - 6px);
-        max-width: calc(50% - 6px);
+        flex: 0 0 calc(50% - 5px) !important;
+        width: calc(50% - 5px) !important;
+        min-width: calc(50% - 5px) !important;
+        max-width: calc(50% - 5px) !important;
     }
 
     .cell-val {
         order: 8;
-        flex: 1 1 calc(50% - 6px);
-        min-width: calc(50% - 6px);
-        max-width: calc(50% - 6px);
+        flex: 0 0 calc(50% - 5px) !important;
+        width: calc(50% - 5px) !important;
+        min-width: calc(50% - 5px) !important;
+        max-width: calc(50% - 5px) !important;
     }
 
     .field-label-mobile {
         display: block;
-        font-size: 11px;
+        font-size: 10.5px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         color: #64748b;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
     }
 
     .editor-input-text, .editor-input-num {
-        font-size: 14.5px;
-        padding: 9px 12px;
+        font-size: 14px;
+        padding: 8px 10px;
         width: 100%;
+        min-width: 0;
+        height: 36px;
     }
 
     .cell-val .val-text {
-        font-size: 15px;
+        font-size: 14.5px;
         font-weight: 800;
         color: #0f172a;
-        padding: 8px 12px;
+        padding: 6px 10px;
         background: #f1f5f9;
         border-radius: 6px;
         border: 1.5px solid #cbd5e1;
@@ -1135,7 +1151,7 @@ body {
         align-items: center;
         justify-content: flex-end;
         width: 100%;
-        min-height: 38px;
+        height: 36px;
     }
 
     /* Live Summary Bar */
