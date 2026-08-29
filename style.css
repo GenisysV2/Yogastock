@@ -995,19 +995,15 @@ body {
     }
 
     .editor-table tr {
-        display: grid;
-        grid-template-columns: auto 1fr auto auto;
-        grid-template-areas:
-            "sno desc lock del"
-            "qty qty unit unit"
-            "rate rate val val";
-        gap: 10px;
+        display: flex;
+        flex-wrap: wrap;
         background: #ffffff;
         border: 1.5px solid var(--editor-border);
-        border-radius: 10px;
-        padding: 12px 14px;
-        margin-bottom: 12px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 14px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        gap: 10px 10px;
         align-items: center;
     }
 
@@ -1022,96 +1018,124 @@ body {
         background: transparent !important;
     }
 
+    /* Top Row: S.No (1) + Description (2, Expanded) + Lock (3) + Delete (4) */
     .cell-sno {
-        grid-area: sno;
+        order: 1;
         background: #e0e7ff;
         color: #4338ca;
         font-weight: 800;
-        font-size: 12px;
-        width: 26px;
-        height: 26px;
+        font-size: 13px;
+        min-width: 30px;
+        height: 38px;
         border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
     }
 
     .cell-desc {
-        grid-area: desc;
+        order: 2;
+        flex: 1 1 0%;
+        min-width: 130px;
     }
 
     .cell-desc input {
         font-weight: 700;
-        font-size: 14.5px;
+        font-size: 15px;
         color: #0f172a;
         background: #f8fafc;
-        padding: 8px 10px;
+        padding: 8px 12px;
+        height: 38px;
+        width: 100%;
+    }
+
+    .cell-desc .field-label-mobile {
+        display: none !important;
     }
 
     .cell-lock {
-        grid-area: lock;
-        display: flex;
-        justify-content: center;
+        order: 3;
+        flex-shrink: 0;
     }
 
     .lock-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 13px;
+        width: 38px;
+        height: 38px;
+        font-size: 14px;
     }
 
     .cell-del {
-        grid-area: del;
-        display: flex;
-        justify-content: center;
+        order: 4;
+        flex-shrink: 0;
     }
 
     .delete-row-btn {
-        font-size: 20px;
-        padding: 2px 6px;
+        font-size: 24px;
+        padding: 2px 8px;
+        line-height: 1;
     }
 
+    /* Row 2 (2 Columns in a Row): Quantity & Unit (50% - 50% split) */
     .cell-qty {
-        grid-area: qty;
+        order: 5;
+        flex: 1 1 calc(50% - 6px);
+        min-width: calc(50% - 6px);
+        max-width: calc(50% - 6px);
     }
 
     .cell-unit {
-        grid-area: unit;
+        order: 6;
+        flex: 1 1 calc(50% - 6px);
+        min-width: calc(50% - 6px);
+        max-width: calc(50% - 6px);
     }
 
+    /* Row 3 (2 Columns in a Row): Unit Rate & Value (50% - 50% split) */
     .cell-rate {
-        grid-area: rate;
+        order: 7;
+        flex: 1 1 calc(50% - 6px);
+        min-width: calc(50% - 6px);
+        max-width: calc(50% - 6px);
     }
 
     .cell-val {
-        grid-area: val;
+        order: 8;
+        flex: 1 1 calc(50% - 6px);
+        min-width: calc(50% - 6px);
+        max-width: calc(50% - 6px);
     }
 
     .field-label-mobile {
         display: block;
-        font-size: 10.5px;
+        font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         color: #64748b;
-        margin-bottom: 3px;
+        margin-bottom: 4px;
     }
 
     .editor-input-text, .editor-input-num {
         font-size: 14.5px;
-        padding: 8px 10px;
+        padding: 9px 12px;
+        width: 100%;
     }
 
     .cell-val .val-text {
-        font-size: 14.5px;
+        font-size: 15px;
         font-weight: 800;
         color: #0f172a;
-        padding: 7px 10px;
+        padding: 8px 12px;
         background: #f1f5f9;
         border-radius: 6px;
         border: 1.5px solid #cbd5e1;
         text-align: right;
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        width: 100%;
+        min-height: 38px;
     }
 
     /* Live Summary Bar */
